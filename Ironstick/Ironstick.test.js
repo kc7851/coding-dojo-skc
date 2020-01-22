@@ -5,48 +5,56 @@
 
 function solution(arrangement) {
     const replace = replaceLaser(arrangement);
-    const lasers = getLaserLocations(replace);
-    const ironSticks = getIronstickLocations(replace);
-    return sumOfPiece(ironSticks, lasers)
+    const ironSticks = getLocations(replace);
+    return sumOfPiece1(ironSticks)
 }
 
-const replaceLaser = (arrangement) => {
-    return arrangement.replace(/[(][)]/g, "L");
-}
+const replaceLaser = (arrangement) =>
+    arrangement.replace(/[(][)]/g, "L");
 
-const getLaserLocations = (arrangement) => {
-    return [...arrangement].reduce((acc, cur, index) => {
-        return cur === 'L' ? [...acc, index] : acc
-    }, [])
-}
-
-const getIronstickLocations = (arrangement) => {
-    let locations = []
+const getLocations = (arrangement) => {
+    let lasers = []
+    let ironsticks = []
     const split = arrangement.split('');
-    for(let i = 0; i < split.length; i++){
+    for (let i = 0; i < split.length; i++) {
         const v = split[i];
-        if(v === '(') {
-            locations.push([i])
-        }else if(v === ')') {
-            for (let j = locations.length - 1; j >= 0; j--){
-                if(locations[j].length === 1){
-                    locations[j].push(i)
+        if (v === '(') {
+            ironsticks.push([i])
+        } else if (v === ')') {
+            for (let j = ironsticks.length - 1; j >= 0; j--) {
+                if (ironsticks[j].length === 1) {
+                    ironsticks[j].push(i)
                     break;
                 }
             }
+        } else if (v === 'L') {
+            lasers.push(i)
         }
     }
-    return locations;
+    return [ironsticks, lasers];
 }
 
-const sumOfPiece = (ironSticks, lasers) => {
+const sumOfPiece1 = (array) => {
     let count = 0;
-    lasers.forEach(v => {
-        count += ironSticks.filter(location => {
+    array[1].forEach(v => {
+        count += array[0].filter(location => {
             return location[0] < v && location[1] > v
         }).length
     });
-    return count += ironSticks.length
+    return count += array[0].length
+}
+
+const sumOfPiece2 = (array) => {
+    let count = 0;
+    array[0].forEach(stick => {
+        for( let i = 0; i < array[1].length; i ++) {
+            if( array[1][i] > stick[0] && array[1][i] < stick[1]){
+                count++;
+            }
+            if(array[1][i] > stick[1]) break;
+        }
+    })
+    return count += array[0].length
 }
 
 test('solution', () => {
@@ -57,14 +65,12 @@ test('replaceLaser', () => {
     expect(replaceLaser("()(((()())(())()))(())")).toBe("L(((LL)(L)L))(L)");
 })
 
-test('getLaserLocations', () => {
-    expect(getLaserLocations("L(((LL)(L)L))(L)")).toEqual([0, 4, 5, 8, 10, 14]);
-})
-
-test('getIronstickLocations', () => {
-    expect(getIronstickLocations("L(((LL)(L)L))(L)")).toEqual([[1, 12], [2, 11], [3, 6], [7, 9], [13, 15]]);
+test('getLocations', () => {
+    expect(getLocations("L(((LL)(L)L))(L)")).toEqual([[[1, 12], [2, 11], [3, 6], [7, 9], [13, 15]], [0, 4, 5, 8, 10, 14]]);
 })
 
 test('sumOfPiece', () => {
-    expect(sumOfPiece([[1, 12], [2, 11], [3, 6], [7, 9], [13, 15]], [0, 4, 5, 8, 10, 14])).toBe(17);
+    [sumOfPiece1, sumOfPiece2].forEach(sumOfPiece => {
+        expect(sumOfPiece([[[1, 12], [2, 11], [3, 6], [7, 9], [13, 15]], [0, 4, 5, 8, 10, 14]])).toBe(17);
+    })
 })
